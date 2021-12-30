@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-service-configmap
+data:
+  MYSQL_DATABASE: "{{ .Values.app.mysql.database }}"
+  MYSQL_HOST: "{{ .Values.app.mysql.host }}"
+  MYSQL_PORT: "{{ .Values.app.mysql.port }}"
+  MYSQL_USER: "{{ .Values.app.mysql.user }}"
+  SERVICE_PORT: "{{ .Values.app.configService.port }}"
+  SERVICE_USERNAME: "{{ .Values.app.configService.user }}"
+  DEFAULT_DOMAIN: "{{ .Values.app.configService.domain }}"
+  DEFAULT_POSTMASTER: "{{ .Values.app.configService.postmaster }}"

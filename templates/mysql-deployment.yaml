@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: mysql
+  labels:
+    io.kompose.service: mysql
+    {{- include "common.labels" . | nindent 4 }}
+  name: mysql
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      io.kompose.service: mysql
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: mysql
+      labels:
+        io.kompose.service: mysql
+    spec:
+      containers:
+        - env:
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: mysql-password
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: mysql-root-password
+          envFrom:
+            - configMapRef:
+                name: mysql-configmap
+          image: mysql/mysql-server:5.7
+          name: mysql
+          ports:
+            - containerPort: {{ .Values.app.mysql.port }}
+          resources: {}
+      restartPolicy: Always
+status: {}

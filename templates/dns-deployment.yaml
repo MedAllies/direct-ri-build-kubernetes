@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: dns
+  labels:
+    io.kompose.service: dns
+  name: dns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: dns
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: dns
+      labels:
+        io.kompose.service: dns
+    spec:
+      initContainers:
+        - name: init-wait-for-config-service
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 config-service {{ .Values.app.configService.port }} && exit 0 || sleep 3; done; exit 1" ]
+      containers:
+        - env:
+            - name: CLOUD_CONFIG
+              value: "false"
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: config-service-password
+          envFrom:
+            - configMapRef:
+                name: dns-configmap
+          image: dns:latest
+          imagePullPolicy: Never
+          name: dns
+          ports:
+            - containerPort: {{ .Values.app.dns.port }}
+            - containerPort: {{ .Values.app.dns.port }}
+              protocol: UDP
+          resources: {}
+          livenessProbe:
+            tcpSocket:
+              port: {{ .Values.app.dns.port }}
+            initialDelaySeconds: {{ .Values.app.dns.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.dns.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.app.dns.livenessProbe.timeoutSeconds }}
+      restartPolicy: Always
+status: {}

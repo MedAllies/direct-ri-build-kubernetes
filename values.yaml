@@ -1,0 +1,156 @@
+# Default values for the RI HISP components.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+replicaCount: 1
+
+app:
+  mysql:
+    database: nhind
+    host: mysql
+    port: 3306
+    user: nhind
+    password: nhind
+    rootpass: direct
+
+  rabbitmq:
+    host: rabbitmq
+    port1: 5672
+    port2: 15672
+    password: guest
+    user: guest
+
+  configService:
+    host: config-service
+    port: 8082
+    user: nhind
+    password: direct
+    postmaster: postmaster@my.hisp.local
+    domain: my.hisp.local
+    livenessProbe:
+        path: /actuator/health
+        authorization: bmhpbmQ6ZGlyZWN0
+        initialDelaySeconds: 120
+        periodSeconds: 3
+        timeoutSeconds: 5
+
+  configUI:
+    host: config-ui
+    port: 8080
+    user: admin
+    password: direct
+    livenessProbe:
+      path: /login
+      initialDelaySeconds: 120
+      periodSeconds: 3
+      timeoutSeconds: 5
+
+  smtpMQgateway:
+    host: smtp-gateway
+    port: 25
+    livenessProbe:
+      initialDelaySeconds: 120
+      periodSeconds: 5
+      timeoutSeconds: 10
+
+  msgMonitor:
+    host: msg-monitor
+    port: 8081
+    user: admin
+    password: direct
+    livenessProbe:
+      path: /actuator/health
+      authorization: bmhpbmQ6ZGlyZWN0
+      initialDelaySeconds: 120
+      periodSeconds: 3
+      timeoutSeconds: 5
+
+  xd:
+    host: xd
+    port: 8087
+    usestreams: true
+    livenessProbe:
+      path: /xd/services/DocumentRepository_Service/DocumentRepository_RetrieveDocumentSet
+      initialDelaySeconds: 120
+      periodSeconds: 3
+      timeoutSeconds: 5
+
+  sta:
+    host: sta
+    port: 8083
+    livenessProbe:
+      path: /actuator/health
+      initialDelaySeconds: 120
+      periodSeconds: 3
+      timeoutSeconds: 5
+
+  james:
+    host: james-server
+    port1: 8084
+    port2: 1143
+    port3: 1587
+    port4: 1110
+    user: admin
+    livenessProbe:
+      path: /healthcheck
+      initialDelaySeconds: 120
+      periodSeconds: 3
+      timeoutSeconds: 5
+      authorization: YWRtaW46ZDFyM2N0
+
+  dns:
+    host: dns
+    port: 1053
+    bindingAddress: 0.0.0.0
+    fqdn: 127.0.0.1
+    livenessProbe:
+      initialDelaySeconds: 120
+      periodSeconds: 3
+      timeoutSeconds: 5
+
+service:
+  ports:
+    mysql:
+      port: 3306
+      targetPort: 3306
+
+    rabbitmq:
+      port1: 5672
+      targetPort1: 5672
+      port2: 15672
+      targetPort2: 15672
+
+    configService:
+      port: 8082
+      targetPort: 8082
+
+    configUI:
+      port: 8080
+      targetPort: 8080
+
+    smtpMQgateway:
+      port: 25
+      targetPort: 25
+
+    msgMonitor:
+      port: 8081
+      targetPort: 8081
+
+    xd:
+      port: 8087
+      targetPort: 8087
+
+    sta:
+      port: 8083
+      targetPort: 8083
+
+    james:
+      port1: 8084
+      targetPort1: 8084
+      port2: 1143
+      targetPort2: 1143
+      port3: 1587
+      targetPort3: 1587
+
+    dns:
+      port: 1053
+      targetPort: 1053

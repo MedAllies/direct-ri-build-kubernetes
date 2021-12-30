@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: rabbitmq
+  labels:
+    io.kompose.service: rabbitmq
+    {{- include "common.labels" . | nindent 4 }}
+  name: rabbitmq
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      io.kompose.service: rabbitmq
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: rabbitmq
+      labels:
+        io.kompose.service: rabbitmq
+    spec:
+      containers:
+        - env:
+            - name: DEFAULT_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: rabbitmq-password
+          envFrom:
+            - configMapRef:
+                name: rabbitmq-configmap
+          image: rabbitmq:3-management
+          livenessProbe:
+            exec:
+              command:
+                - rabbitmq-diagnostics -q ping
+            failureThreshold: 3
+            periodSeconds: 30
+            timeoutSeconds: 30
+          name: rabbitmq
+          ports:
+            - containerPort: {{ .Values.app.rabbitmq.port1 }}
+            - containerPort: {{ .Values.app.rabbitmq.port2 }}
+          resources: {}
+      restartPolicy: Always
+status: {}

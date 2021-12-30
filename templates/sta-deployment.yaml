@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: sta
+  labels:
+    io.kompose.service: sta
+  name: sta
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: sta
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: sta
+      labels:
+        io.kompose.service: sta
+    spec:
+      initContainers:
+        - name: init-wait-for-rabbitmq
+          image: curlimages/curl:latest
+          command:
+            - '/bin/sh'
+            - '-c'
+            - >
+              set -ex;
+              until curl --fail --connect-timeout 5 -L -u {{ .Values.app.rabbitmq.user }}:{{ .Values.app.rabbitmq.password }} http://{{ .Values.app.rabbitmq.host }}:{{ .Values.app.rabbitmq.port2 }}/api/healthchecks/node; do sleep 2; done
+        - name: init-wait-for-config-service
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 config-service {{ .Values.app.configService.port }} && exit 0 || sleep 3; done; exit 1" ]
+        - name: init-wait-for-xd
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 xd {{ .Values.app.xd.port }} && exit 0 || sleep 3; done; exit 1" ]
+        - name: init-wait-for-smtp-gateway
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 smtp-mq-gateway {{ .Values.app.smtpMQgateway.port }} && exit 0 || sleep 3; done; exit 1" ]
+        - name: init-wait-for-msg-monitor
+          image: curlimages/curl:latest
+          command:
+            - '/bin/sh'
+            - '-c'
+            - >
+              set -ex;
+              until curl --fail --connect-timeout 5 http://{{ .Values.app.msgMonitor.host }}:{{ .Values.app.msgMonitor.port }}/actuator/health; do sleep 2; done
+      containers:
+        - env:
+            - name: CLOUD_CONFIG
+              value: "false"
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: config-service-password
+            - name: RABBIT_MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: rabbitmq-password
+          envFrom:
+            - configMapRef:
+                name: sta-configmap
+          image: sta:latest
+          imagePullPolicy: Never
+          name: sta
+          ports:
+            - containerPort: {{ .Values.app.sta.port }}
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "{{ .Values.app.sta.livenessProbe.path}}"
+              port: {{ .Values.app.sta.port }}
+            initialDelaySeconds: {{ .Values.app.sta.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.sta.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.sta.livenessProbe.timeoutSeconds }}
+      restartPolicy: Always
+status: {}

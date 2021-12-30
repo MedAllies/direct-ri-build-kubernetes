@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: config-service
+  labels:
+    io.kompose.service: config-service
+  name: config-service
+spec:
+  ports:
+    - name: "{{ .Values.service.ports.configService.port }}"
+      port: {{ .Values.service.ports.configService.port }}
+      targetPort: {{ .Values.service.ports.configService.port }}
+  type: LoadBalancer
+  selector:
+    io.kompose.service: config-service
+status:
+  loadBalancer: {}
