@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: xd
+  labels:
+    io.kompose.service: xd
+  name: xd
+spec:
+  ports:
+    - name: "{{ .Values.service.ports.xd.port }}"
+      port: {{ .Values.service.ports.xd.port }}
+      targetPort: {{ .Values.service.ports.xd.targetPort }}
+  type: LoadBalancer
+  selector:
+    io.kompose.service: xd
+status:
+  loadBalancer: {}

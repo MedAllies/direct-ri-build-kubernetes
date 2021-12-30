@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: config-service
+  labels:
+    io.kompose.service: config-service
+    {{- include "common.labels" . | nindent 4 }}
+  name: config-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: config-service
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: config-service
+      labels:
+        io.kompose.service: config-service
+    spec:
+      initContainers:
+        - name: init-wait-for-mysql
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 mysql {{ .Values.app.mysql.port }} && exit 0 || sleep 3; done; exit 1" ]
+      containers:
+        - env:
+            - name: CLOUD_CONFIG
+              value: "false"
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: mysql-password
+            - name: SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: config-service-password
+          envFrom:
+            - configMapRef:
+                name: config-service-configmap
+          image: config-service:latest
+          imagePullPolicy: Never
+          name: config-service
+          ports:
+            - containerPort: {{ .Values.app.configService.port }}
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "{{ .Values.app.configService.livenessProbe.path}}"
+              port: {{ .Values.app.configService.port }}
+              httpHeaders:
+                - name: Authorization
+                  value: Basic {{ .Values.app.configService.livenessProbe.authorization }}
+            initialDelaySeconds: {{ .Values.app.configService.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.configService.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.configService.livenessProbe.timeoutSeconds }}
+      restartPolicy: Always
+status: {}

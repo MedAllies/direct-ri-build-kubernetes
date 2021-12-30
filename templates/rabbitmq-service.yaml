@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: rabbitmq
+  labels:
+    io.kompose.service: rabbitmq
+  name: rabbitmq
+spec:
+  ports:
+    - name: "{{ .Values.service.ports.rabbitmq.port1 }}"
+      port: {{ .Values.service.ports.rabbitmq.port1 }}
+      targetPort: {{ .Values.service.ports.rabbitmq.port1 }}
+    - name: "{{ .Values.service.ports.rabbitmq.port2 }}"
+      port: {{ .Values.service.ports.rabbitmq.port2 }}
+      targetPort: {{ .Values.service.ports.rabbitmq.port2 }}
+  type: LoadBalancer
+  selector:
+    io.kompose.service: rabbitmq
+status:
+  loadBalancer: {}

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: james-server
+  labels:
+    io.kompose.service: james-server
+  name: james-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: james-server
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: james-server
+      labels:
+        io.kompose.service: james-server
+    spec:
+      initContainers:
+        - name: init-wait-for-sta
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 sta {{ .Values.app.sta.port }} && exit 0 || sleep 3; done; exit 1" ]
+      containers:
+        - env:
+            - name: CLOUD_CONFIG
+              value: "false"
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: config-service-password
+            - name: RABBIT_MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: rabbitmq-password
+            - name: WEBADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: james-webadmin-password
+          envFrom:
+            - configMapRef:
+                name: james-configmap
+          image: james-server:latest
+          imagePullPolicy: Never
+          name: james-server
+          ports:
+            - containerPort: {{ .Values.app.james.port1 }}
+            - containerPort: {{ .Values.app.james.port2 }}
+            - containerPort: {{ .Values.app.james.port3 }}
+          resources: {}
+          volumeMounts:
+            - mountPath: /opt/app/conf
+              name: james-server-claim0
+            - mountPath: /opt/app/var
+              name: james-server-claim1
+          livenessProbe:
+            httpGet:
+              path: "{{ .Values.app.james.livenessProbe.path }}"
+              port: {{ .Values.app.james.port1 }}
+              httpHeaders:
+                - name: Authorization
+                  value: Basic {{ .Values.app.james.livenessProbe.authorization }}
+            initialDelaySeconds: {{ .Values.app.james.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.james.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.james.livenessProbe.timeoutSeconds }}
+          lifecycle:
+            postStart:
+              exec:
+                command: [ "/bin/sh", "-c", "sleep 600; ./testAccounts.sh {{ .Values.app.james.livenessProbe.authorization }}" ]
+      restartPolicy: Always
+      volumes:
+        - name: james-server-claim0
+          persistentVolumeClaim:
+            claimName: james-server-claim0
+        - name: james-server-claim1
+          persistentVolumeClaim:
+            claimName: james-server-claim1
+status: {}

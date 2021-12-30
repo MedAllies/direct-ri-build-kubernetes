@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: msg-monitor
+  labels:
+    io.kompose.service: msg-monitor
+  name: msg-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: msg-monitor
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: msg-monitor
+      labels:
+        io.kompose.service: msg-monitor
+    spec:
+      initContainers:
+      - name: init-wait-for-mysql
+        image: alpine:latest
+        command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 mysql {{ .Values.app.mysql.port }} && exit 0 || sleep 3; done; exit 1" ]
+      - name: init-wait-for-rabbitmq
+        image: curlimages/curl:latest
+        command:
+          - '/bin/sh'
+          - '-c'
+          - >
+            set -ex;
+            until curl --fail --connect-timeout 5 -L -u {{ .Values.app.rabbitmq.user }}:{{ .Values.app.rabbitmq.password }} http://rabbitmq:{{ .Values.app.rabbitmq.port2 }}/api/healthchecks/node; do sleep 2; done
+      containers:
+        - env:
+            - name: CLOUD_CONFIG
+              value: "false"
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: mysql-password
+            - name: RABBIT_MQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: rabbitmq-password
+            - name: SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: msg-monitor-password
+          envFrom:
+            - configMapRef:
+                name: msg-monitor-configmap
+          image: msg-monitor:latest
+          imagePullPolicy: Never
+          name: msg-monitor
+          ports:
+            - containerPort: {{ .Values.app.msgMonitor.port }}
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "{{ .Values.app.msgMonitor.livenessProbe.path}}"
+              port:  {{ .Values.app.msgMonitor.port }}
+              httpHeaders:
+                - name: Authorization
+                  value: Basic {{ .Values.app.msgMonitor.livenessProbe.authorization }}
+            initialDelaySeconds: {{ .Values.app.msgMonitor.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.msgMonitor.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.msgMonitor.livenessProbe.timeoutSeconds }}
+      restartPolicy: Always
+status: {}

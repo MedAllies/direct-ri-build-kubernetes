@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: msg-monitor-configmap
+data:
+  MYSQL_DATABASE: {{ .Values.app.mysql.database }}
+  MYSQL_HOST: {{ .Values.app.mysql.host }}
+  MYSQL_PORT: "{{ .Values.app.mysql.port }}"
+  MYSQL_USER: {{ .Values.app.mysql.user }}
+  RABBIT_MQ_HOST: {{ .Values.app.rabbitmq.host }}
+  RABBIT_MQ_PORT: "{{ .Values.app.rabbitmq.port }}"
+  RABBIT_MQ_USERNAME: {{ .Values.app.rabbitmq.user }}
+  SERVICE_PORT: "{{ .Values.app.msgMonitor.port }}"
+  SERVICE_USERNAME: {{ .Values.app.msgMonitor.user }}

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: config-ui
+  labels:
+    io.kompose.service: config-ui
+    {{- include "common.labels" . | nindent 4 }}
+  name: config-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: config-ui
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        appName: {{ include "common.fullname" . }}
+        componentName: config-ui
+      labels:
+        io.kompose.service: config-ui
+    spec:
+      initContainers:
+        - name: init-wait-for-config-service
+          image: alpine:latest
+          command: [ "sh", "-c", "for i in $(seq 1 300); do nc -zvw1 config-service {{ .Values.app.configService.port }} && exit 0 || sleep 3; done; exit 1"]
+      containers:
+        - env:
+            - name: CLOUD_CONFIG
+              value: "false"
+            - name: CONFIG_SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: config-service-password
+            - name: SERVICE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: direct-secrets
+                  key: config-ui-password
+          envFrom:
+            - configMapRef:
+                name: config-ui-configmap
+          image: config-ui:latest
+          imagePullPolicy: Never
+          name: config-ui
+          ports:
+            - containerPort: {{ .Values.app.configUI.port }}
+          resources: {}
+          livenessProbe:
+            httpGet:
+              path: "{{ .Values.app.configUI.livenessProbe.path}}"
+              port: {{ .Values.app.configUI.port }}
+            initialDelaySeconds: {{ .Values.app.configUI.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.app.configUI.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.app.configUI.livenessProbe.timeoutSeconds }}
+      restartPolicy: Always
+status: {}

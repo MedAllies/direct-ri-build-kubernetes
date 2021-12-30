@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-lb-tcp
+spec:
+  selector:
+    io.kompose.service: dns
+  ports:
+    - port: {{ .Values.service.ports.dns.port }}
+      targetPort: {{ .Values.service.ports.dns.targetPort  }}
+      protocol: TCP
+  type: LoadBalancer
+  loadBalancerIP: {{ .Values.app.dns.fqdn }}

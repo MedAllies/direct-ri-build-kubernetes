@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    appName: {{ include "common.fullname" . }}
+    componentName: msg-monitor
+  labels:
+    io.kompose.service: msg-monitor
+  name: msg-monitor
+spec:
+  ports:
+    - name: "{{ .Values.service.ports.msgMonitor.port }}"
+      port: {{ .Values.service.ports.msgMonitor.port }}
+      targetPort: {{ .Values.service.ports.msgMonitor.port }}
+  type: LoadBalancer
+  selector:
+    io.kompose.service: msg-monitor
+status:
+  loadBalancer: {}

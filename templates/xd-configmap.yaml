@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xd-configmap
+data:
+  CONFIG_SERVICE_HOST: {{  .Values.app.configService.host }}
+  CONFIG_SERVICE_PORT: "{{  .Values.app.configService.port }}"
+  CONFIG_SERVICE_USERNAME: {{  .Values.app.configService.user }}
+  RABBIT_MQ_HOST: {{  .Values.app.rabbitmq.host }}
+  RABBIT_MQ_PORT: "{{  .Values.app.rabbitmq.port1 }}"
+  RABBIT_MQ_USERNAME: {{  .Values.app.rabbitmq.user }}
+  SERVICE_PORT: "{{  .Values.app.xd.port }}"
+  XD_USESTREAMS: "{{  .Values.app.xd.usestreams }}"

@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smtp-mq-gateway-configmap
+data:
+  RABBIT_MQ_HOST: {{ .Values.app.rabbitmq.host }}
+  RABBIT_MQ_PORT: "{{ .Values.app.rabbitmq.port1 }}"
+  RABBIT_MQ_USERNAME: {{ .Values.app.rabbitmq.user }}
+  SMTP_MQ_GATEWAY_PORT: "{{ .Values.app.smtpMQgateway.port }}"
