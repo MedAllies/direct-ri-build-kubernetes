@@ -30,6 +30,11 @@ spec:
             - >
               set -ex;
               until curl --fail --connect-timeout 5 -L -u {{ .Values.app.rabbitmq.user }}:{{ .Values.app.rabbitmq.password }} http://rabbitmq:{{ .Values.app.rabbitmq.port2 }}/api/healthchecks/node; do sleep 2; done
+      volumes:
+        - name: smtp-mq-gateway-liveness-configmap
+          configMap:
+            name: smtp-mq-gateway-liveness-configmap
+            defaultMode: 0777
       containers:
         - env:
             - name: CLOUD_CONFIG
@@ -47,10 +52,13 @@ spec:
           name: smtp-mq-gateway
           ports:
             - containerPort: {{ .Values.app.smtpMQgateway.port }}
+          volumeMounts:
+            - name: smtp-mq-gateway-liveness-configmap
+              mountPath: /usr/local/bin
           resources: {}
           livenessProbe:
             exec:
-              command: [ "/smtp-mq-gateway-livenessconfig-map/livenessCheck.sh","localhost", "{{ .Values.app.smtpMQgateway.port  }}" ]
+              command: [ "/usr/local/bin/livenessCheck.sh","localhost", "{{ .Values.app.smtpMQgateway.port  }}" ]
             initialDelaySeconds: {{ .Values.app.smtpMQgateway.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.app.smtpMQgateway.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.app.smtpMQgateway.livenessProbe.timeoutSeconds }}

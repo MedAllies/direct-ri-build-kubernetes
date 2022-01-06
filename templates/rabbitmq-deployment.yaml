@@ -32,11 +32,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: rabbitmq-configmap
-          image: rabbitmq:3-management
+          image: rabbitmq:3.9-management
           livenessProbe:
             exec:
-              command:
-                - rabbitmq-diagnostics -q ping
+              command: ['rabbitmq-diagnostics', '-q', 'ping']
             failureThreshold: 3
             periodSeconds: 30
             timeoutSeconds: 30
