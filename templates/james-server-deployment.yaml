@@ -71,10 +71,6 @@ spec:
             initialDelaySeconds: {{ .Values.app.james.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.app.james.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.app.james.livenessProbe.timeoutSeconds }}
-          lifecycle:
-            postStart:
-              exec:
-                command: [ "/bin/sh", "-c", "sleep 600; ./testAccounts.sh {{ .Values.app.james.livenessProbe.authorization }}" ]
       restartPolicy: Always
       volumes:
         - name: james-server-claim0
